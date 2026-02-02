@@ -17,6 +17,10 @@ See [SPEC.md](SPEC.md) for the formal rules.
 Built on top of [IMP2VC2SMT](https://github.com/namin/metaprogramming/tree/master/lectures/5-smt),
 a pedagogical Hoare logic verifier.
 
+Also see implementations of Olive in:
+- [Loom's Velvet](https://github.com/verse-lab/loom/compare/master...namin:loom:olive)
+- [Dafny](https://github.com/dafny-lang/dafny/compare/master...namin:dafny:olive) (with some limitations around finding the exact pre- and post-conditions of a hole)
+
 ## Requirements
 
 - Scala 3 (via sbt)

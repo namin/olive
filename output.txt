@@ -85,7 +85,7 @@ else
 post: ((m = x || m = y) && (x <= m && y <= m))
 
 Obligations (1 holes):
-  {true} □0 {((m = x || m = y) && (x <= m && y <= m))}
+  {(true && !x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
 
 Verification conditions (1):
   VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
@@ -113,7 +113,7 @@ do
 post: i = n
 
 Obligations (1 holes):
-  {(i = 0 && 0 <= n)} □0 {(0 <= i && i <= n)}
+  {((0 <= i && i <= n) && i < n)} □0 {(0 <= i && i <= n)}
 
 Verification conditions (3):
   VC1: ((i = 0 && 0 <= n) => (0 <= i && i <= n))
@@ -140,8 +140,8 @@ else
 post: ((m = x || m = y) && (x <= m && y <= m))
 
 Obligations (2 holes):
-  {true} □0 {((m = x || m = y) && (x <= m && y <= m))}
-  {true} □1 {((m = x || m = y) && (x <= m && y <= m))}
+  {(true && x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
+  {(true && !x < y)} □1 {((m = x || m = y) && (x <= m && y <= m))}
 
 Verification conditions (1):
   VC1: (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
@@ -167,7 +167,7 @@ x := 0;
 post: x = 1
 
 Obligations (1 holes):
-  {true} □0 {x = 1}
+  {0 = 1} □0 {x = 1}
 
 Verification conditions (1):
   VC1: (true => 0 = 1)
@@ -343,4 +343,4 @@ Z3 Verification:
   VC1: VALID
 
 VERIFIED: completion of SeqWithHole
-[success] Total time: 1 s, completed Feb 1, 2026, 10:43:40 PM
+[success] Total time: 1 s, completed Feb 1, 2026, 10:52:06 PM

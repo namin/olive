@@ -61,9 +61,13 @@ Only valid for hole-free programs.
 
 Read: "Under pre `P`, command `c` is consistent with post `Q`, producing obligations `O`."
 
+The precondition `P` is **threaded forward** through the program structure so that each hole receives the strongest available precondition at its program point.
+
 ---
 
 ### 5. 🔧 Key Rules
+
+Each rule receives a precondition `P` (the context flowing forward) and a postcondition `Q` (flowing backward via weakest precondition). The precondition is propagated forward to sub-commands so that holes see the actual pre at their program point.
 
 #### Skip
 
@@ -94,6 +98,8 @@ Read: "Under pre `P`, command `c` is consistent with post `Q`, producing obligat
 Γ ⊢ {P} c₁ ; c₂ {Q} ▷ O₁ ∪ O₂
 ```
 
+Here `R` is both the postcondition of `c₁` (computed via WP of `c₂`) and the precondition forwarded to `c₂`.
+
 ---
 
 #### Conditional
@@ -104,6 +110,8 @@ Read: "Under pre `P`, command `c` is consistent with post `Q`, producing obligat
 ————————————————————————
 Γ ⊢ {P} if e then c₁ else c₂ {Q} ▷ O₁ ∪ O₂
 ```
+
+Each branch receives the precondition strengthened by the branch condition.
 
 ---
 
@@ -116,6 +124,8 @@ We assume invariant `I` is supplied.
 ———————————————
 Γ ⊢ {P} while e inv I do c {I ∧ ¬e} ▷ O₁ ∪ {P ⇒ I}
 ```
+
+The loop body receives `I ∧ e` as its precondition.
 
 (Optionally, you can also include `I ∧ ¬e ⇒ Q` if you want to verify a follow-up command after the loop.)
 
@@ -148,7 +158,7 @@ Assume is a proof-free way to introduce obligations: we trust P.
 Γ ⊢ {P} □ {Q} ▷ { {P} □ {Q} }
 ```
 
-Meaning: “for this partial step to be valid, any hole-filling must satisfy this Hoare triple.”
+`P` is the precondition at the hole's program point (propagated forward through the structure), and `Q` is the required postcondition (propagated backward via WP). The obligation captures both, giving the hole-filler the strongest available contract.
 
 ---
 

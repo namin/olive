@@ -1,0 +1,346 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading project definition from /Users/namin/code/cld/olive/project
+[info] loading settings for project olive from build.sbt...
+[info] set current project to imp2vc2smt (in build file:/Users/namin/code/cld/olive/)
+[info] running Main 
+
+==================================================
+=== Max ===
+==================================================
+
+pre:  true
+if (x < y) then
+  m := y
+else
+  m := x
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: Max
+
+==================================================
+=== Loop ===
+==================================================
+
+pre:  ((i = 0 && s = 0) && 0 <= n)
+while (i < n)
+  inv: (0 <= i && i <= n)
+do
+  s := s + i;
+  i := i + 1
+post: i = n
+
+Verification conditions (3):
+  VC1: (((i = 0 && s = 0) && 0 <= n) => (0 <= i && i <= n))
+  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
+  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+  VC2: VALID
+  VC3: VALID
+
+VERIFIED: Loop
+
+==================================================
+=== MaxBogus ===
+==================================================
+
+pre:  true
+if (x < y) then
+  m := y
+else
+  m := x
+post: m = x
+
+Verification conditions (1):
+  VC1: (true => ((x < y => y = x) && (!x < y => x = x)))
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => ((x < y => y = x) && (!x < y => x = x)))
+    Counterexample:
+      x = -1
+      y = 0
+
+FAILED: MaxBogus (1 invalid VC(s))
+
+==================================================
+=== MaxWithHole ===
+==================================================
+
+pre:  true
+if (x < y) then
+  m := y
+else
+  [□0]
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Obligations (1 holes):
+  {true} □0 {((m = x || m = y) && (x <= m && y <= m))}
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+    Counterexample:
+      m = 0
+      x = 7
+      y = 7
+
+FAILED: MaxWithHole (1 invalid VC(s))
+
+==================================================
+=== LoopWithHole ===
+==================================================
+
+pre:  (i = 0 && 0 <= n)
+while (i < n)
+  inv: (0 <= i && i <= n)
+do
+  [□0]
+post: i = n
+
+Obligations (1 holes):
+  {(i = 0 && 0 <= n)} □0 {(0 <= i && i <= n)}
+
+Verification conditions (3):
+  VC1: ((i = 0 && 0 <= n) => (0 <= i && i <= n))
+  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i && i <= n))
+  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+  VC2: VALID
+  VC3: VALID
+
+PARTIAL: LoopWithHole verified modulo 1 obligation(s)
+
+==================================================
+=== MaxTwoHoles ===
+==================================================
+
+pre:  true
+if (x < y) then
+  [□0]
+else
+  [□1]
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Obligations (2 holes):
+  {true} □0 {((m = x || m = y) && (x <= m && y <= m))}
+  {true} □1 {((m = x || m = y) && (x <= m && y <= m))}
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+    Counterexample:
+      m = -8
+      x = -1
+      y = -7
+
+FAILED: MaxTwoHoles (1 invalid VC(s))
+
+==================================================
+=== SeqWithHole ===
+==================================================
+
+pre:  true
+x := 0;
+[□0]
+post: x = 1
+
+Obligations (1 holes):
+  {true} □0 {x = 1}
+
+Verification conditions (1):
+  VC1: (true => 0 = 1)
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => 0 = 1)
+
+FAILED: SeqWithHole (1 invalid VC(s))
+
+==================================================
+=== Completing MaxWithHole ===
+==================================================
+
+Original:
+pre:  true
+if (x < y) then
+  m := y
+else
+  [□0]
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Fillings:
+  □0 -> m := x
+
+Completed:
+pre:  true
+if (x < y) then
+  m := y
+else
+  m := x
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of MaxWithHole
+
+==================================================
+=== Completing MaxWithHole (wrong) ===
+==================================================
+
+Original:
+pre:  true
+if (x < y) then
+  m := y
+else
+  [□0]
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Fillings:
+  □0 -> m := y
+
+Completed:
+pre:  true
+if (x < y) then
+  m := y
+else
+  m := y
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((y = x || y = y) && (x <= y && y <= y)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((y = x || y = y) && (x <= y && y <= y)))))
+    Counterexample:
+      x = 0
+      y = -1
+
+FAILED: completion of MaxWithHole (wrong) (1 invalid VC(s))
+
+==================================================
+=== Completing LoopWithHole ===
+==================================================
+
+Original:
+pre:  (i = 0 && 0 <= n)
+while (i < n)
+  inv: (0 <= i && i <= n)
+do
+  [□0]
+post: i = n
+
+Fillings:
+  □0 -> i := i + 1
+
+Completed:
+pre:  (i = 0 && 0 <= n)
+while (i < n)
+  inv: (0 <= i && i <= n)
+do
+  i := i + 1
+post: i = n
+
+Verification conditions (3):
+  VC1: ((i = 0 && 0 <= n) => (0 <= i && i <= n))
+  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
+  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+  VC2: VALID
+  VC3: VALID
+
+VERIFIED: completion of LoopWithHole
+
+==================================================
+=== Completing MaxTwoHoles ===
+==================================================
+
+Original:
+pre:  true
+if (x < y) then
+  [□0]
+else
+  [□1]
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Fillings:
+  □0 -> m := y
+  □1 -> m := x
+
+Completed:
+pre:  true
+if (x < y) then
+  m := y
+else
+  m := x
+post: ((m = x || m = y) && (x <= m && y <= m))
+
+Verification conditions (1):
+  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of MaxTwoHoles
+
+==================================================
+=== Completing SeqWithHole ===
+==================================================
+
+Original:
+pre:  true
+x := 0;
+[□0]
+post: x = 1
+
+Fillings:
+  □0 -> x := x + 1
+
+Completed:
+pre:  true
+x := 0;
+x := x + 1
+post: x = 1
+
+Verification conditions (1):
+  VC1: (true => 0 + 1 = 1)
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of SeqWithHole
+[success] Total time: 1 s, completed Feb 1, 2026, 10:43:40 PM

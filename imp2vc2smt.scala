@@ -373,31 +373,41 @@ object Main extends App {
 
     val result = Verifier.verify(prog)
 
-    if (result.obligations.nonEmpty) {
-      println(s"\nObligations (${result.obligations.length} holes):")
-      result.obligations.foreach { ob =>
-        println(s"  ${pp(ob)}")
-      }
-    }
+    // Build unified list of labeled items: VCs and obligations
+    sealed trait Item { def expr: BExpr }
+    case class VCItem(index: Int, expr: BExpr) extends Item
+    case class ObItem(ob: Obligation, expr: BExpr) extends Item
 
-    println(s"\nVerification conditions (${result.vcs.length}):")
-    result.vcs.zipWithIndex.foreach { case (vc, i) =>
-      println(s"  VC${i+1}: ${pp(vc)}")
+    val vcItems = result.vcs.zipWithIndex.map { case (vc, i) => VCItem(i + 1, vc) }
+    val obItems = result.obligations.map { ob => ObItem(ob, Implies(ob.pre, ob.post)) }
+    val allItems: List[Item] = vcItems ++ obItems
+
+    println(s"\nChecks (${allItems.length}):")
+    allItems.foreach {
+      case VCItem(i, vc) =>
+        println(s"  [VC$i]                ${pp(vc)}")
+      case ObItem(ob, _) =>
+        val pad = " " * (19 - s"OBLIGATION for □${ob.holeId}".length).max(1)
+        println(s"  [OBLIGATION for □${ob.holeId}]${pad}${pp(ob)}")
     }
 
     try {
       println(s"\nZ3 Verification:")
       println("-" * 40)
-      val results = Z3Runner.verifyAll(result.vcs)
+      val z3Results = Z3Runner.verifyAll(allItems.map(_.expr))
       var failureCount = 0
 
-      results.zipWithIndex.foreach { case ((vc, smtScript, isValid, output, model), i) =>
+      z3Results.zip(allItems).foreach { case ((_, _, isValid, _, model), item) =>
+        val label = item match {
+          case VCItem(i, _) => s"VC$i"
+          case ObItem(ob, _) => s"OBLIGATION for □${ob.holeId}"
+        }
         if (isValid) {
-          println(s"  VC${i+1}: VALID")
+          println(s"  $label: VALID")
         } else {
           failureCount += 1
-          println(s"  VC${i+1}: INVALID")
-          println(s"    Failed: ${pp(vc)}")
+          println(s"  $label: INVALID")
+          println(s"    Failed: ${pp(item.expr)}")
           model.foreach { m =>
             if (m.nonEmpty) {
               println("    Counterexample:")

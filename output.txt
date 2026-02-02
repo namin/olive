@@ -15,8 +15,8 @@ else
   m := x
 post: ((m = x || m = y) && (x <= m && y <= m))
 
-Verification conditions (1):
-  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+Checks (1):
+  [VC1]                (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
 
 Z3 Verification:
 ----------------------------------------
@@ -36,10 +36,10 @@ do
   i := i + 1
 post: i = n
 
-Verification conditions (3):
-  VC1: (((i = 0 && s = 0) && 0 <= n) => (0 <= i && i <= n))
-  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
-  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+Checks (3):
+  [VC1]                (((i = 0 && s = 0) && 0 <= n) => (0 <= i && i <= n))
+  [VC2]                (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
+  [VC3]                (((0 <= i && i <= n) && !i < n) => i = n)
 
 Z3 Verification:
 ----------------------------------------
@@ -60,8 +60,8 @@ else
   m := x
 post: m = x
 
-Verification conditions (1):
-  VC1: (true => ((x < y => y = x) && (!x < y => x = x)))
+Checks (1):
+  [VC1]                (true => ((x < y => y = x) && (!x < y => x = x)))
 
 Z3 Verification:
 ----------------------------------------
@@ -84,11 +84,9 @@ else
   [□0]
 post: ((m = x || m = y) && (x <= m && y <= m))
 
-Obligations (1 holes):
-  {(true && !x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
-
-Verification conditions (1):
-  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+Checks (2):
+  [VC1]                (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+  [OBLIGATION for □0]  {(true && !x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
 
 Z3 Verification:
 ----------------------------------------
@@ -98,8 +96,14 @@ Z3 Verification:
       m = 0
       x = 7
       y = 7
+  OBLIGATION for □0: INVALID
+    Failed: ((true && !x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Counterexample:
+      m = -8
+      x = -1
+      y = -1
 
-FAILED: MaxWithHole (1 invalid VC(s))
+FAILED: MaxWithHole (2 invalid VC(s))
 
 ==================================================
 === LoopWithHole ===
@@ -112,19 +116,18 @@ do
   [□0]
 post: i = n
 
-Obligations (1 holes):
-  {((0 <= i && i <= n) && i < n)} □0 {(0 <= i && i <= n)}
-
-Verification conditions (3):
-  VC1: ((i = 0 && 0 <= n) => (0 <= i && i <= n))
-  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i && i <= n))
-  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+Checks (4):
+  [VC1]                ((i = 0 && 0 <= n) => (0 <= i && i <= n))
+  [VC2]                (((0 <= i && i <= n) && i < n) => (0 <= i && i <= n))
+  [VC3]                (((0 <= i && i <= n) && !i < n) => i = n)
+  [OBLIGATION for □0]  {((0 <= i && i <= n) && i < n)} □0 {(0 <= i && i <= n)}
 
 Z3 Verification:
 ----------------------------------------
   VC1: VALID
   VC2: VALID
   VC3: VALID
+  OBLIGATION for □0: VALID
 
 PARTIAL: LoopWithHole verified modulo 1 obligation(s)
 
@@ -139,12 +142,10 @@ else
   [□1]
 post: ((m = x || m = y) && (x <= m && y <= m))
 
-Obligations (2 holes):
-  {(true && x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
-  {(true && !x < y)} □1 {((m = x || m = y) && (x <= m && y <= m))}
-
-Verification conditions (1):
-  VC1: (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+Checks (3):
+  [VC1]                (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+  [OBLIGATION for □0]  {(true && x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
+  [OBLIGATION for □1]  {(true && !x < y)} □1 {((m = x || m = y) && (x <= m && y <= m))}
 
 Z3 Verification:
 ----------------------------------------
@@ -154,8 +155,20 @@ Z3 Verification:
       m = -8
       x = -1
       y = -7
+  OBLIGATION for □0: INVALID
+    Failed: ((true && x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Counterexample:
+      m = 0
+      x = 6
+      y = 7
+  OBLIGATION for □1: INVALID
+    Failed: ((true && !x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Counterexample:
+      m = -8
+      x = -1
+      y = -1
 
-FAILED: MaxTwoHoles (1 invalid VC(s))
+FAILED: MaxTwoHoles (3 invalid VC(s))
 
 ==================================================
 === SeqWithHole ===
@@ -166,16 +179,17 @@ x := 0;
 [□0]
 post: x = 1
 
-Obligations (1 holes):
-  {0 = 1} □0 {x = 1}
-
-Verification conditions (1):
-  VC1: (true => 0 = 1)
+Checks (2):
+  [VC1]                (true => 0 = 1)
+  [OBLIGATION for □0]  {0 = 1} □0 {x = 1}
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
     Failed: (true => 0 = 1)
+    Counterexample:
+      x = 0
+  OBLIGATION for □0: VALID
 
 FAILED: SeqWithHole (1 invalid VC(s))
 
@@ -343,4 +357,4 @@ Z3 Verification:
   VC1: VALID
 
 VERIFIED: completion of SeqWithHole
-[success] Total time: 1 s, completed Feb 1, 2026, 10:52:06 PM
+[success] Total time: 1 s, completed Feb 1, 2026, 10:54:09 PM

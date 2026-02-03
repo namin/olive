@@ -18,7 +18,7 @@ Built on top of [IMP2VC2SMT](https://github.com/namin/metaprogramming/tree/maste
 a pedagogical Hoare logic verifier.
 
 Also see implementations of Olive in:
-- [Loom's Velvet](https://github.com/verse-lab/loom/compare/master...namin:loom:olive)
+- [Loom's Velvet](https://github.com/verse-lab/loom/compare/master...namin:loom:olive) (see [overview](https://github.com/namin/loom/blob/olive/CaseStudies/Velvet/VelvetExamples/Olive.md))
 - [Dafny](https://github.com/dafny-lang/dafny/compare/master...namin:dafny:olive) (with some limitations around finding the exact pre- and post-conditions of a hole)
 
 ## Requirements

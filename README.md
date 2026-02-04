@@ -14,7 +14,7 @@ via weakest precondition). VCs and obligations are checked with Z3.
 
 See [SPEC.md](SPEC.md) for the formal rules.
 
-Built on top of [IMP2VC2SMT](https://github.com/namin/metaprogramming/tree/master/lectures/5-smt),
+Built on top of [Imp2VC2SMT](https://github.com/namin/metaprogramming/tree/master/lectures/5-smt),
 a pedagogical Hoare logic verifier.
 
 Also see implementations of Olive in:

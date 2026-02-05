@@ -14,8 +14,12 @@ via weakest precondition). VCs and obligations are checked with Z3.
 
 See [SPEC.md](SPEC.md) for the formal rules.
 
-Built on top of [IMP-VC-SMT](https://github.com/namin/metaprogramming/tree/master/lectures/5-smt),
+Built on top of [Imp2VC2SMT](https://github.com/namin/metaprogramming/tree/master/lectures/5-smt),
 a pedagogical Hoare logic verifier.
+
+Also see implementations of Olive in:
+- [Loom's Velvet](https://github.com/verse-lab/loom/compare/master...namin:loom:olive) (see [overview](https://github.com/namin/loom/blob/olive/CaseStudies/Velvet/VelvetExamples/Olive.md))
+- [Dafny](https://github.com/dafny-lang/dafny/compare/master...namin:dafny:olive) (with some limitations around finding the exact pre- and post-conditions of a hole)
 
 ## Requirements
 

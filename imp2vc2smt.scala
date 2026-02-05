@@ -26,7 +26,7 @@ case class Implies(b1: BExpr, b2: BExpr) extends BExpr
 sealed trait Stmt
 case object Skip extends Stmt
 case class Assign(x: String, a: AExpr) extends Stmt
-case class Seq(s1: Stmt, s2: Stmt) extends Stmt
+case class Sequence(s1: Stmt, s2: Stmt) extends Stmt
 case class If(b: BExpr, s1: Stmt, s2: Stmt) extends Stmt
 case class While(b: BExpr, inv: BExpr, s: Stmt) extends Stmt
 case class Assert(p: BExpr) extends Stmt
@@ -71,7 +71,7 @@ object Verifier {
     case Assign(x, a) =>
       (substitute(q, x, a), Nil, Nil)
 
-    case Seq(s1, s2) =>
+    case Sequence(s1, s2) =>
       val (wp2, vcs2, obs2) = wpVc(s2, p, q)  // p is approximate here; refined below
       val (wp1, vcs1, obs1) = wpVc(s1, p, wp2)
       // The precondition for s2 is the WP of s1 (what holds after s1)
@@ -117,7 +117,7 @@ object Verifier {
   def fillHoles(s: Stmt, fillings: Map[Int, Stmt]): Stmt = s match {
     case Skip => Skip
     case Assign(x, a) => Assign(x, a)
-    case Seq(s1, s2) => Seq(fillHoles(s1, fillings), fillHoles(s2, fillings))
+    case Sequence(s1, s2) => Sequence(fillHoles(s1, fillings), fillHoles(s2, fillings))
     case If(b, s1, s2) => If(b, fillHoles(s1, fillings), fillHoles(s2, fillings))
     case While(b, inv, s) => While(b, inv, fillHoles(s, fillings))
     case Assert(p) => Assert(p)
@@ -136,6 +136,7 @@ object Verifier {
 object SMTLib {
   
   def toSMT(e: AExpr): String = e match {
+    case Num(n) if n < 0 => s"(- ${-n})"
     case Num(n) => n.toString
     case Var(x) => x
     case Plus(a1, a2) => s"(+ ${toSMT(a1)} ${toSMT(a2)})"
@@ -178,7 +179,7 @@ object SMTLib {
 // Z3 integration
 object Z3Runner {
   def checkSat(smtScript: String): (Boolean, String) = {
-    val result = (Process(scala.Seq("z3", "-in")) #< new java.io.ByteArrayInputStream(smtScript.getBytes)).!!
+    val result = (Process(Seq("z3", "-in")) #< new java.io.ByteArrayInputStream(smtScript.getBytes)).!!
     val lines = result.trim.split("\n")
 
     val isSat = lines.headOption.contains("sat")
@@ -237,10 +238,10 @@ object PP {
   def pp(b: BExpr): String = b match {
     case True => "true"
     case False => "false"
-    case Eq(a1, a2) => s"${pp(a1)} = ${pp(a2)}"
-    case Lt(a1, a2) => s"${pp(a1)} < ${pp(a2)}"
-    case Leq(a1, a2) => s"${pp(a1)} <= ${pp(a2)}"
-    case Not(b1) => s"!${pp(b1)}"
+    case Eq(a1, a2) => s"(${pp(a1)} = ${pp(a2)})"
+    case Lt(a1, a2) => s"(${pp(a1)} < ${pp(a2)})"
+    case Leq(a1, a2) => s"(${pp(a1)} <= ${pp(a2)})"
+    case Not(b1) => s"(!${pp(b1)})"
     case And(b1, b2) => s"(${pp(b1)} && ${pp(b2)})"
     case Or(b1, b2) => s"(${pp(b1)} || ${pp(b2)})"
     case Implies(b1, b2) => s"(${pp(b1)} => ${pp(b2)})"
@@ -249,9 +250,9 @@ object PP {
   def pp(a: AExpr): String = a match {
     case Num(n) => n.toString
     case Var(x) => x
-    case Plus(a1, a2) => s"${pp(a1)} + ${pp(a2)}"
-    case Minus(a1, a2) => s"${pp(a1)} - ${pp(a2)}"
-    case Times(a1, a2) => s"${pp(a1)} * ${pp(a2)}"
+    case Plus(a1, a2) => s"(${pp(a1)} + ${pp(a2)})"
+    case Minus(a1, a2) => s"(${pp(a1)} - ${pp(a2)})"
+    case Times(a1, a2) => s"(${pp(a1)} * ${pp(a2)})"
   }
 
   def pp(s: Stmt, indent: Int = 0): String = {
@@ -259,7 +260,7 @@ object PP {
     s match {
       case Skip => s"${sp}skip"
       case Assign(x, a) => s"${sp}$x := ${pp(a)}"
-      case Seq(s1, s2) => s"${pp(s1, indent)};\n${pp(s2, indent)}"
+      case Sequence(s1, s2) => s"${pp(s1, indent)};\n${pp(s2, indent)}"
       case If(b, s1, s2) =>
         s"${sp}if (${pp(b)}) then\n${pp(s1, indent + 1)}\n${sp}else\n${pp(s2, indent + 1)}"
       case While(b, inv, s) =>
@@ -300,7 +301,7 @@ object Main extends App {
     While(
       Lt(Var("i"), Var("n")),
       And(Leq(Num(0), Var("i")), Leq(Var("i"), Var("n"))),
-      Seq(
+      Sequence(
         Assign("s", Plus(Var("s"), Var("i"))),
         Assign("i", Plus(Var("i"), Num(1)))
       )
@@ -352,7 +353,7 @@ object Main extends App {
   // Hole after assignment: init + □ + postcondition
   val seqWithHole = Program(
     True,
-    Seq(Assign("x", Num(0)), Hole(0)),
+    Sequence(Assign("x", Num(0)), Hole(0)),
     Eq(Var("x"), Num(1))
   )
 

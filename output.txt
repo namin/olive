@@ -2,6 +2,8 @@
 [info] loading project definition from /Users/namin/code/cld/olive/project
 [info] loading settings for project olive from build.sbt...
 [info] set current project to imp2vc2smt (in build file:/Users/namin/code/cld/olive/)
+[info] compiling 1 Scala source to /Users/namin/code/cld/olive/target/scala-3.3.6/classes ...
+[info] done compiling
 [info] running Main 
 
 ==================================================
@@ -9,14 +11,14 @@
 ==================================================
 
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   m := x
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Checks (1):
-  [VC1]                (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+  [VC1]                (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((x = x) || (x = y)) && ((x <= x) && (y <= x))))))
 
 Z3 Verification:
 ----------------------------------------
@@ -28,18 +30,18 @@ VERIFIED: Max
 === Loop ===
 ==================================================
 
-pre:  ((i = 0 && s = 0) && 0 <= n)
-while (i < n)
-  inv: (0 <= i && i <= n)
+pre:  (((i = 0) && (s = 0)) && (0 <= n))
+while ((i < n))
+  inv: ((0 <= i) && (i <= n))
 do
-  s := s + i;
-  i := i + 1
-post: i = n
+  s := (s + i);
+  i := (i + 1)
+post: (i = n)
 
 Checks (3):
-  [VC1]                (((i = 0 && s = 0) && 0 <= n) => (0 <= i && i <= n))
-  [VC2]                (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
-  [VC3]                (((0 <= i && i <= n) && !i < n) => i = n)
+  [VC1]                ((((i = 0) && (s = 0)) && (0 <= n)) => ((0 <= i) && (i <= n)))
+  [VC2]                ((((0 <= i) && (i <= n)) && (i < n)) => ((0 <= (i + 1)) && ((i + 1) <= n)))
+  [VC3]                ((((0 <= i) && (i <= n)) && (!(i < n))) => (i = n))
 
 Z3 Verification:
 ----------------------------------------
@@ -54,19 +56,19 @@ VERIFIED: Loop
 ==================================================
 
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   m := x
-post: m = x
+post: (m = x)
 
 Checks (1):
-  [VC1]                (true => ((x < y => y = x) && (!x < y => x = x)))
+  [VC1]                (true => (((x < y) => (y = x)) && ((!(x < y)) => (x = x))))
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
-    Failed: (true => ((x < y => y = x) && (!x < y => x = x)))
+    Failed: (true => (((x < y) => (y = x)) && ((!(x < y)) => (x = x))))
     Counterexample:
       x = -1
       y = 0
@@ -78,26 +80,26 @@ FAILED: MaxBogus (1 invalid VC(s))
 ==================================================
 
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   [□0]
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Checks (2):
-  [VC1]                (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
-  [OBLIGATION for □0]  {(true && !x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
+  [VC1]                (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))))
+  [OBLIGATION for □0]  {(true && (!(x < y)))} □0 {(((m = x) || (m = y)) && ((x <= m) && (y <= m)))}
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
-    Failed: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+    Failed: (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))))
     Counterexample:
       m = 0
       x = 7
       y = 7
   OBLIGATION for □0: INVALID
-    Failed: ((true && !x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Failed: ((true && (!(x < y))) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))
     Counterexample:
       m = -8
       x = -1
@@ -109,18 +111,18 @@ FAILED: MaxWithHole (2 invalid VC(s))
 === LoopWithHole ===
 ==================================================
 
-pre:  (i = 0 && 0 <= n)
-while (i < n)
-  inv: (0 <= i && i <= n)
+pre:  ((i = 0) && (0 <= n))
+while ((i < n))
+  inv: ((0 <= i) && (i <= n))
 do
   [□0]
-post: i = n
+post: (i = n)
 
 Checks (4):
-  [VC1]                ((i = 0 && 0 <= n) => (0 <= i && i <= n))
-  [VC2]                (((0 <= i && i <= n) && i < n) => (0 <= i && i <= n))
-  [VC3]                (((0 <= i && i <= n) && !i < n) => i = n)
-  [OBLIGATION for □0]  {((0 <= i && i <= n) && i < n)} □0 {(0 <= i && i <= n)}
+  [VC1]                (((i = 0) && (0 <= n)) => ((0 <= i) && (i <= n)))
+  [VC2]                ((((0 <= i) && (i <= n)) && (i < n)) => ((0 <= i) && (i <= n)))
+  [VC3]                ((((0 <= i) && (i <= n)) && (!(i < n))) => (i = n))
+  [OBLIGATION for □0]  {(((0 <= i) && (i <= n)) && (i < n))} □0 {((0 <= i) && (i <= n))}
 
 Z3 Verification:
 ----------------------------------------
@@ -136,33 +138,33 @@ PARTIAL: LoopWithHole verified modulo 1 obligation(s)
 ==================================================
 
 pre:  true
-if (x < y) then
+if ((x < y)) then
   [□0]
 else
   [□1]
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Checks (3):
-  [VC1]                (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
-  [OBLIGATION for □0]  {(true && x < y)} □0 {((m = x || m = y) && (x <= m && y <= m))}
-  [OBLIGATION for □1]  {(true && !x < y)} □1 {((m = x || m = y) && (x <= m && y <= m))}
+  [VC1]                (true => (((x < y) => (((m = x) || (m = y)) && ((x <= m) && (y <= m)))) && ((!(x < y)) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))))
+  [OBLIGATION for □0]  {(true && (x < y))} □0 {(((m = x) || (m = y)) && ((x <= m) && (y <= m)))}
+  [OBLIGATION for □1]  {(true && (!(x < y)))} □1 {(((m = x) || (m = y)) && ((x <= m) && (y <= m)))}
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
-    Failed: (true => ((x < y => ((m = x || m = y) && (x <= m && y <= m))) && (!x < y => ((m = x || m = y) && (x <= m && y <= m)))))
+    Failed: (true => (((x < y) => (((m = x) || (m = y)) && ((x <= m) && (y <= m)))) && ((!(x < y)) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))))
     Counterexample:
       m = -8
       x = -1
       y = -7
   OBLIGATION for □0: INVALID
-    Failed: ((true && x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Failed: ((true && (x < y)) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))
     Counterexample:
       m = 0
       x = 6
       y = 7
   OBLIGATION for □1: INVALID
-    Failed: ((true && !x < y) => ((m = x || m = y) && (x <= m && y <= m)))
+    Failed: ((true && (!(x < y))) => (((m = x) || (m = y)) && ((x <= m) && (y <= m))))
     Counterexample:
       m = -8
       x = -1
@@ -177,16 +179,16 @@ FAILED: MaxTwoHoles (3 invalid VC(s))
 pre:  true
 x := 0;
 [□0]
-post: x = 1
+post: (x = 1)
 
 Checks (2):
-  [VC1]                (true => 0 = 1)
-  [OBLIGATION for □0]  {0 = 1} □0 {x = 1}
+  [VC1]                (true => (0 = 1))
+  [OBLIGATION for □0]  {(0 = 1)} □0 {(x = 1)}
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
-    Failed: (true => 0 = 1)
+    Failed: (true => (0 = 1))
     Counterexample:
       x = 0
   OBLIGATION for □0: VALID
@@ -199,25 +201,25 @@ FAILED: SeqWithHole (1 invalid VC(s))
 
 Original:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   [□0]
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Fillings:
   □0 -> m := x
 
 Completed:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   m := x
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Verification conditions (1):
-  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+  VC1: (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((x = x) || (x = y)) && ((x <= x) && (y <= x))))))
 
 Z3 Verification:
 ----------------------------------------
@@ -231,30 +233,30 @@ VERIFIED: completion of MaxWithHole
 
 Original:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   [□0]
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Fillings:
   □0 -> m := y
 
 Completed:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   m := y
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Verification conditions (1):
-  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((y = x || y = y) && (x <= y && y <= y)))))
+  VC1: (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((y = x) || (y = y)) && ((x <= y) && (y <= y))))))
 
 Z3 Verification:
 ----------------------------------------
   VC1: INVALID
-    Failed: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((y = x || y = y) && (x <= y && y <= y)))))
+    Failed: (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((y = x) || (y = y)) && ((x <= y) && (y <= y))))))
     Counterexample:
       x = 0
       y = -1
@@ -266,28 +268,28 @@ FAILED: completion of MaxWithHole (wrong) (1 invalid VC(s))
 ==================================================
 
 Original:
-pre:  (i = 0 && 0 <= n)
-while (i < n)
-  inv: (0 <= i && i <= n)
+pre:  ((i = 0) && (0 <= n))
+while ((i < n))
+  inv: ((0 <= i) && (i <= n))
 do
   [□0]
-post: i = n
+post: (i = n)
 
 Fillings:
-  □0 -> i := i + 1
+  □0 -> i := (i + 1)
 
 Completed:
-pre:  (i = 0 && 0 <= n)
-while (i < n)
-  inv: (0 <= i && i <= n)
+pre:  ((i = 0) && (0 <= n))
+while ((i < n))
+  inv: ((0 <= i) && (i <= n))
 do
-  i := i + 1
-post: i = n
+  i := (i + 1)
+post: (i = n)
 
 Verification conditions (3):
-  VC1: ((i = 0 && 0 <= n) => (0 <= i && i <= n))
-  VC2: (((0 <= i && i <= n) && i < n) => (0 <= i + 1 && i + 1 <= n))
-  VC3: (((0 <= i && i <= n) && !i < n) => i = n)
+  VC1: (((i = 0) && (0 <= n)) => ((0 <= i) && (i <= n)))
+  VC2: ((((0 <= i) && (i <= n)) && (i < n)) => ((0 <= (i + 1)) && ((i + 1) <= n)))
+  VC3: ((((0 <= i) && (i <= n)) && (!(i < n))) => (i = n))
 
 Z3 Verification:
 ----------------------------------------
@@ -303,11 +305,11 @@ VERIFIED: completion of LoopWithHole
 
 Original:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   [□0]
 else
   [□1]
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Fillings:
   □0 -> m := y
@@ -315,14 +317,14 @@ Fillings:
 
 Completed:
 pre:  true
-if (x < y) then
+if ((x < y)) then
   m := y
 else
   m := x
-post: ((m = x || m = y) && (x <= m && y <= m))
+post: (((m = x) || (m = y)) && ((x <= m) && (y <= m)))
 
 Verification conditions (1):
-  VC1: (true => ((x < y => ((y = x || y = y) && (x <= y && y <= y))) && (!x < y => ((x = x || x = y) && (x <= x && y <= x)))))
+  VC1: (true => (((x < y) => (((y = x) || (y = y)) && ((x <= y) && (y <= y)))) && ((!(x < y)) => (((x = x) || (x = y)) && ((x <= x) && (y <= x))))))
 
 Z3 Verification:
 ----------------------------------------
@@ -338,23 +340,23 @@ Original:
 pre:  true
 x := 0;
 [□0]
-post: x = 1
+post: (x = 1)
 
 Fillings:
-  □0 -> x := x + 1
+  □0 -> x := (x + 1)
 
 Completed:
 pre:  true
 x := 0;
-x := x + 1
-post: x = 1
+x := (x + 1)
+post: (x = 1)
 
 Verification conditions (1):
-  VC1: (true => 0 + 1 = 1)
+  VC1: (true => ((0 + 1) = 1))
 
 Z3 Verification:
 ----------------------------------------
   VC1: VALID
 
 VERIFIED: completion of SeqWithHole
-[success] Total time: 1 s, completed Feb 1, 2026, 10:54:09 PM
+[success] Total time: 3 s, completed Feb 5, 2026, 8:43:16 AM

@@ -74,8 +74,8 @@ object Verifier {
     case Sequence(s1, s2) =>
       val (wp2, vcs2, obs2) = wpVc(s2, p, q)  // p is approximate here; refined below
       val (wp1, vcs1, obs1) = wpVc(s1, p, wp2)
-      // The precondition for s2 is the WP of s1 (what holds after s1)
-      val (_, vcs2r, obs2r) = wpVc(s2, wp1, q)
+      // The precondition for s2 is R = wp(s2, q), the midpoint (spec Sequence rule)
+      val (_, vcs2r, obs2r) = wpVc(s2, wp2, q)
       (wp1, vcs1 ++ vcs2r, obs1 ++ obs2r)
 
     case If(b, s1, s2) =>

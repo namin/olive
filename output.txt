@@ -2,8 +2,6 @@
 [info] loading project definition from /Users/anastasiya/code/cld/olive/project
 [info] loading settings for project olive from build.sbt...
 [info] set current project to imp2vc2smt (in build file:/Users/anastasiya/code/cld/olive/)
-[info] compiling 1 Scala source to /Users/anastasiya/code/cld/olive/target/scala-3.3.6/classes ...
-[info] done compiling
 [info] running Main 
 
 ==================================================
@@ -183,7 +181,7 @@ post: (x = 1)
 
 Checks (2):
   [VC1]                (true => (0 = 1))
-  [OBLIGATION for □0]  {(0 = 1)} □0 {(x = 1)}
+  [OBLIGATION for □0]  {(x = 1)} □0 {(x = 1)}
 
 Z3 Verification:
 ----------------------------------------
@@ -236,18 +234,15 @@ post: (x = 1)
 Checks (3):
   [VC1]                (true => (1 = 1))
   [OBLIGATION for □0]  {true} □0 {(1 = 1)}
-  [OBLIGATION for □1]  {(1 = 1)} □1 {(x = 1)}
+  [OBLIGATION for □1]  {(x = 1)} □1 {(x = 1)}
 
 Z3 Verification:
 ----------------------------------------
   VC1: VALID
   OBLIGATION for □0: VALID
-  OBLIGATION for □1: INVALID
-    Failed: ((1 = 1) => (x = 1))
-    Counterexample:
-      x = 2
+  OBLIGATION for □1: VALID
 
-FAILED: SeqTwoHolesNonConsec (1 invalid VC(s))
+PARTIAL: SeqTwoHolesNonConsec verified modulo 2 obligation(s)
 
 ==================================================
 === Completing MaxWithHole ===
@@ -534,4 +529,4 @@ Z3 Verification:
   VC1: VALID
 
 VERIFIED: completion of SeqTwoHolesNonConsec
-[success] Total time: 3 s, completed Feb 14, 2026, 1:38:52 PM
+[success] Total time: 0 s, completed Feb 14, 2026, 1:46:27 PM

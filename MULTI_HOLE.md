@@ -96,7 +96,16 @@ So per the spec, **both obligations are trivial** — the concrete code `x := 1`
 
 ### 4. The Implementation Bug
 
-The discrepancy comes from line 78 of `imp2vc2smt.scala`:
+The upstream `imp2vc2smt.scala` (from the metaprogramming lectures) has no holes, so its Sequence rule is simply:
+
+```scala
+case Sequence(s1, s2) =>
+  val (wp2, vcs2) = wpVc(s2, q)
+  val (wp1, vcs1) = wpVc(s1, wp2)
+  (wp1, vcs1 ++ vcs2)
+```
+
+No forward-flowing precondition, no bug. Olive extended this by adding a `p` parameter to thread preconditions forward to holes. The extended Sequence rule introduced a refinement step that re-runs s2 with a better precondition — but passed the wrong value:
 
 ```scala
 case Sequence(s1, s2) =>
@@ -134,9 +143,9 @@ The **completion check** (which re-runs WP on the fully filled program) correctl
 
 ---
 
-### 6. A Possible Fix
+### 6. The Fix
 
-The fix to match the spec is to pass **wp2** (the midpoint) instead of **wp1** as the forward precondition for s2:
+The fix (now applied) passes **wp2** (the midpoint) instead of **wp1** as the forward precondition for s2:
 
 ```scala
 case Sequence(s1, s2) =>
@@ -171,6 +180,6 @@ Possible extensions to address this:
 
 | Program | □0 obligation | □1 obligation | Notes |
 |---|---|---|---|
-| `□0 ; □1` | {true} □0 {x=1} | {x=1} □1 {x=1} | Spec-correct; □0 does all work |
-| `□0 ; x:=1 ; □1` (spec) | {true} □0 {true} | {x=1} □1 {x=1} | Both trivial |
-| `□0 ; x:=1 ; □1` (impl) | {true} □0 {(1=1)} | {(1=1)} □1 {x=1} | □1 too strict |
+| `□0 ; □1` | {true} □0 {x=1} | {x=1} □1 {x=1} | □0 does all work |
+| `□0 ; x:=1 ; □1` (fixed) | {true} □0 {true} | {x=1} □1 {x=1} | Both trivial; matches spec |
+| `□0 ; x:=1 ; □1` (before fix) | {true} □0 {(1=1)} | {(1=1)} □1 {x=1} | □1 was too strict |

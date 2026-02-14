@@ -74,8 +74,8 @@ object Verifier {
     case Sequence(s1, s2) =>
       val (wp2, vcs2, obs2) = wpVc(s2, p, q)  // p is approximate here; refined below
       val (wp1, vcs1, obs1) = wpVc(s1, p, wp2)
-      // The precondition for s2 is the WP of s1 (what holds after s1)
-      val (_, vcs2r, obs2r) = wpVc(s2, wp1, q)
+      // The precondition for s2 is R = wp(s2, q), the midpoint (spec Sequence rule)
+      val (_, vcs2r, obs2r) = wpVc(s2, wp2, q)
       (wp1, vcs1 ++ vcs2r, obs1 ++ obs2r)
 
     case If(b, s1, s2) =>
@@ -357,6 +357,23 @@ object Main extends App {
     Eq(Var("x"), Num(1))
   )
 
+  // Succession of two holes: □ ; □
+  // Hole 0 gets {true} □0 {(x = 1)}, Hole 1 gets {(x = 1)} □1 {(x = 1)}
+  // The first hole must establish the postcondition; the second must preserve it.
+  val seqTwoHoles = Program(
+    True,
+    Sequence(Hole(0), Hole(1)),
+    Eq(Var("x"), Num(1))
+  )
+
+  // Non-consecutive holes with concrete code between: □ ; x := 1 ; □
+  // Compare with seqTwoHoles: does the interleaved assignment help?
+  val seqTwoHolesNonConsec = Program(
+    True,
+    Sequence(Hole(0), Sequence(Assign("x", Num(1)), Hole(1))),
+    Eq(Var("x"), Num(1))
+  )
+
   def verifyProgram(name: String, prog: Program): Unit = {
     println(s"\n${"=" * 50}")
     println(s"=== $name ===")
@@ -486,6 +503,8 @@ object Main extends App {
   verifyProgram("LoopWithHole", loopWithHole)
   verifyProgram("MaxTwoHoles", maxTwoHoles)
   verifyProgram("SeqWithHole", seqWithHole)
+  verifyProgram("SeqTwoHoles", seqTwoHoles)
+  verifyProgram("SeqTwoHolesNonConsec", seqTwoHolesNonConsec)
 
   // Verify completions: fill the holes and check soundness
   verifyCompletion("MaxWithHole", maxWithHole,
@@ -502,4 +521,16 @@ object Main extends App {
 
   verifyCompletion("SeqWithHole", seqWithHole,
     Map(0 -> Assign("x", Plus(Var("x"), Num(1)))))  // x := x + 1
+
+  verifyCompletion("SeqTwoHoles", seqTwoHoles,
+    Map(0 -> Assign("x", Num(1)), 1 -> Skip))  // □0 does the work, □1 is skip
+
+  verifyCompletion("SeqTwoHoles (cooperative)", seqTwoHoles,
+    Map(0 -> Assign("x", Num(0)), 1 -> Assign("x", Plus(Var("x"), Num(1)))))  // both contribute
+
+  verifyCompletion("SeqTwoHoles (wrong)", seqTwoHoles,
+    Map(0 -> Skip, 1 -> Skip))  // neither does the work
+
+  verifyCompletion("SeqTwoHolesNonConsec", seqTwoHolesNonConsec,
+    Map(0 -> Skip, 1 -> Skip))  // x:=1 between holes does the work; both holes are skip
 }

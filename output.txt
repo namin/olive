@@ -1,9 +1,7 @@
-[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
-[info] loading project definition from /Users/namin/code/cld/olive/project
+[info] welcome to sbt 1.12.2 (Homebrew Java 25.0.2)
+[info] loading project definition from /Users/anastasiya/code/cld/olive/project
 [info] loading settings for project olive from build.sbt...
-[info] set current project to imp2vc2smt (in build file:/Users/namin/code/cld/olive/)
-[info] compiling 1 Scala source to /Users/namin/code/cld/olive/target/scala-3.3.6/classes ...
-[info] done compiling
+[info] set current project to imp2vc2smt (in build file:/Users/anastasiya/code/cld/olive/)
 [info] running Main 
 
 ==================================================
@@ -183,7 +181,7 @@ post: (x = 1)
 
 Checks (2):
   [VC1]                (true => (0 = 1))
-  [OBLIGATION for □0]  {(0 = 1)} □0 {(x = 1)}
+  [OBLIGATION for □0]  {(x = 1)} □0 {(x = 1)}
 
 Z3 Verification:
 ----------------------------------------
@@ -194,6 +192,57 @@ Z3 Verification:
   OBLIGATION for □0: VALID
 
 FAILED: SeqWithHole (1 invalid VC(s))
+
+==================================================
+=== SeqTwoHoles ===
+==================================================
+
+pre:  true
+[□0];
+[□1]
+post: (x = 1)
+
+Checks (3):
+  [VC1]                (true => (x = 1))
+  [OBLIGATION for □0]  {true} □0 {(x = 1)}
+  [OBLIGATION for □1]  {(x = 1)} □1 {(x = 1)}
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => (x = 1))
+    Counterexample:
+      x = 2
+  OBLIGATION for □0: INVALID
+    Failed: (true => (x = 1))
+    Counterexample:
+      x = 2
+  OBLIGATION for □1: VALID
+
+FAILED: SeqTwoHoles (2 invalid VC(s))
+
+==================================================
+=== SeqTwoHolesNonConsec ===
+==================================================
+
+pre:  true
+[□0];
+x := 1;
+[□1]
+post: (x = 1)
+
+Checks (3):
+  [VC1]                (true => (1 = 1))
+  [OBLIGATION for □0]  {true} □0 {(1 = 1)}
+  [OBLIGATION for □1]  {(x = 1)} □1 {(x = 1)}
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+  OBLIGATION for □0: VALID
+  OBLIGATION for □1: VALID
+
+PARTIAL: SeqTwoHolesNonConsec verified modulo 2 obligation(s)
 
 ==================================================
 === Completing MaxWithHole ===
@@ -359,4 +408,125 @@ Z3 Verification:
   VC1: VALID
 
 VERIFIED: completion of SeqWithHole
-[success] Total time: 3 s, completed Feb 5, 2026, 8:43:16 AM
+
+==================================================
+=== Completing SeqTwoHoles ===
+==================================================
+
+Original:
+pre:  true
+[□0];
+[□1]
+post: (x = 1)
+
+Fillings:
+  □0 -> x := 1
+  □1 -> skip
+
+Completed:
+pre:  true
+x := 1;
+skip
+post: (x = 1)
+
+Verification conditions (1):
+  VC1: (true => (1 = 1))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of SeqTwoHoles
+
+==================================================
+=== Completing SeqTwoHoles (cooperative) ===
+==================================================
+
+Original:
+pre:  true
+[□0];
+[□1]
+post: (x = 1)
+
+Fillings:
+  □0 -> x := 0
+  □1 -> x := (x + 1)
+
+Completed:
+pre:  true
+x := 0;
+x := (x + 1)
+post: (x = 1)
+
+Verification conditions (1):
+  VC1: (true => ((0 + 1) = 1))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of SeqTwoHoles (cooperative)
+
+==================================================
+=== Completing SeqTwoHoles (wrong) ===
+==================================================
+
+Original:
+pre:  true
+[□0];
+[□1]
+post: (x = 1)
+
+Fillings:
+  □0 -> skip
+  □1 -> skip
+
+Completed:
+pre:  true
+skip;
+skip
+post: (x = 1)
+
+Verification conditions (1):
+  VC1: (true => (x = 1))
+
+Z3 Verification:
+----------------------------------------
+  VC1: INVALID
+    Failed: (true => (x = 1))
+    Counterexample:
+      x = 2
+
+FAILED: completion of SeqTwoHoles (wrong) (1 invalid VC(s))
+
+==================================================
+=== Completing SeqTwoHolesNonConsec ===
+==================================================
+
+Original:
+pre:  true
+[□0];
+x := 1;
+[□1]
+post: (x = 1)
+
+Fillings:
+  □0 -> skip
+  □1 -> skip
+
+Completed:
+pre:  true
+skip;
+x := 1;
+skip
+post: (x = 1)
+
+Verification conditions (1):
+  VC1: (true => (1 = 1))
+
+Z3 Verification:
+----------------------------------------
+  VC1: VALID
+
+VERIFIED: completion of SeqTwoHolesNonConsec
+[success] Total time: 0 s, completed Feb 14, 2026, 1:49:34 PM

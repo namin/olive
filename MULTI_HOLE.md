@@ -1,26 +1,26 @@
 ## Multiple Holes in Sequence
 
-### The Setup
+### 1. The Setup
 
-Consider a program with two holes in sequence and a postcondition:
+Consider a program with two holes in sequence:
 
 ```
 {true} □0 ; □1 {x = 1}
 ```
 
-And compare it with a variant where concrete code separates the holes:
+And a variant where concrete code separates the holes:
 
 ```
 {true} □0 ; x := 1 ; □1 {x = 1}
 ```
 
-How does olive handle these? And does the implementation match the spec?
+How does olive handle these?
 
 ---
 
-### 1. What the Spec Says
+### 2. Relevant Rules
 
-The **Sequence rule** from SPEC.md is:
+The **Sequence rule** (from SPEC.md):
 
 ```
 Γ ⊢ {P} c₁ {R} ▷ O₁
@@ -29,23 +29,20 @@ The **Sequence rule** from SPEC.md is:
 Γ ⊢ {P} c₁ ; c₂ {Q} ▷ O₁ ∪ O₂
 ```
 
-R is the **midpoint**: both the postcondition of c₁ and the precondition of c₂.
-In a WP-based approach, R = wp(c₂, Q).
+R is the **midpoint**: both the postcondition of c₁ and the precondition of c₂. In a WP-based approach, R = wp(c₂, Q).
 
-The **Hole rule** is:
+The **Hole rule**:
 
 ```
 ———————————————
 Γ ⊢ {P} □ {Q} ▷ { {P} □ {Q} }
 ```
 
-A hole always produces an obligation pairing its precondition (forwarded from context) with its postcondition (from WP).
-
-Crucially, **wp(□, Q) = Q**: the weakest precondition of a hole is just its postcondition. This is the most conservative choice — since we don't know what the hole does, we assume it needs its goal already established.
+Crucially, **wp(□, Q) = Q**: since we don't know what the hole does, we conservatively require its goal already established.
 
 ---
 
-### 2. Consecutive Holes: `□0 ; □1`
+### 3. Consecutive Holes: `□0 ; □1`
 
 Applying the Sequence rule to `{true} □0 ; □1 {x = 1}`:
 
@@ -53,133 +50,70 @@ Applying the Sequence rule to `{true} □0 ; □1 {x = 1}`:
 - □0 gets obligation: **{true} □0 {x = 1}** — must establish the full postcondition
 - □1 gets obligation: **{x = 1} □1 {x = 1}** — must merely preserve it
 
-This is **sound but asymmetric**: □0 does all the work, □1 is a no-op. The two holes cannot "cooperate" because the midpoint R is forced to be Q — there's no way to split the work.
-
-The root cause: wp(□, Q) = Q means the midpoint between two consecutive holes is always the final postcondition. The first hole must reach it entirely on its own.
-
 **Actual output:**
 ```
 [OBLIGATION for □0]  {true} □0 {(x = 1)}
 [OBLIGATION for □1]  {(x = 1)} □1 {(x = 1)}
 ```
 
-The implementation matches the spec here.
+This is **sound but asymmetric**: □0 does all the work, □1 is a no-op. The two holes cannot cooperate because wp(□, Q) = Q forces the midpoint to be Q itself.
+
+Note that the **completion check** (which re-runs WP on the fully filled program) is more precise than the obligations. The filling `□0 → x := 0, □1 → x := x + 1` violates □0's obligation (it doesn't establish x = 1), but the completed program `x := 0 ; x := x + 1` verifies correctly. Obligations are sufficient for soundness, not necessary.
 
 ---
 
-### 3. Non-Consecutive Holes: `□0 ; x := 1 ; □1`
+### 4. Non-Consecutive Holes: `□0 ; x := 1 ; □1`
 
 Now consider `{true} □0 ; (x := 1 ; □1) {x = 1}`, where c₁ = □0 and c₂ = (x := 1 ; □1).
 
-**Per the spec**, applying the Sequence rule at the outer level:
+At the outer level:
 
-- R = wp(c₂, Q) = wp(x := 1 ; □1, x = 1) = wp(x := 1, wp(□1, x = 1)) = wp(x := 1, x = 1) = (1 = 1) = true
+- R = wp(c₂, Q) = wp(x := 1, wp(□1, x = 1)) = wp(x := 1, x = 1) = (1 = 1) = true
 - □0 gets obligation: **{true} □0 {true}** — trivially satisfied
 
-Then for c₂ = (x := 1 ; □1) with pre R = true:
+Inside c₂ = (x := 1 ; □1) with pre R = true:
 
 - Inner midpoint R' = wp(□1, Q) = (x = 1)
-- x := 1 goes from {true} to {x = 1} — fine
-- □1 gets obligation: **{x = 1} □1 {x = 1}** — also trivially satisfied by skip
-
-So per the spec, **both obligations are trivial** — the concrete code `x := 1` does all the work.
+- x := 1 goes from {true} to {x = 1}
+- □1 gets obligation: **{x = 1} □1 {x = 1}** — trivially satisfied by skip
 
 **Actual output:**
 ```
 [OBLIGATION for □0]  {true} □0 {(1 = 1)}
-[OBLIGATION for □1]  {(1 = 1)} □1 {(x = 1)}
+[OBLIGATION for □1]  {(x = 1)} □1 {(x = 1)}
 ```
 
-□0's obligation is trivially valid (matching the spec). But □1's obligation has precondition **(1 = 1)** instead of **(x = 1)**. The obligation `{true} □1 {x = 1}` demands that □1 establish x = 1 from scratch — even though x = 1 was *just assigned* by the preceding code.
+Both obligations are valid — the concrete code `x := 1` does all the work, and the program is verified modulo obligations (`PARTIAL`). The filling `□0 → skip, □1 → skip` is correctly accepted.
 
 ---
 
-### 4. The Implementation Bug
+### 5. The Asymmetry: A Fundamental Limitation
 
-The upstream `imp2vc2smt.scala` (from the metaprogramming lectures) has no holes, so its Sequence rule is simply:
-
-```scala
-case Sequence(s1, s2) =>
-  val (wp2, vcs2) = wpVc(s2, q)
-  val (wp1, vcs1) = wpVc(s1, wp2)
-  (wp1, vcs1 ++ vcs2)
-```
-
-No forward-flowing precondition, no bug. Olive extended this by adding a `p` parameter to thread preconditions forward to holes. The extended Sequence rule introduced a refinement step that re-runs s2 with a better precondition — but passed the wrong value:
-
-```scala
-case Sequence(s1, s2) =>
-  val (wp2, vcs2, obs2) = wpVc(s2, p, q)  // wp2 = wp(s2, q) = midpoint R
-  val (wp1, vcs1, obs1) = wpVc(s1, p, wp2)
-  val (_, vcs2r, obs2r) = wpVc(s2, wp1, q)  // ← passes wp1 as pre for s2
-  (wp1, vcs1 ++ vcs2r, obs1 ++ obs2r)
-```
-
-The comment says "the precondition for s2 is the WP of s1 (what holds after s1)". But **wp1 is the weakest precondition *before* s1**, not the state *after* s1. Specifically:
-
-- **wp1** = wp(s1, wp2) = what must hold **before s1** for the sequence to work
-- **wp2** = wp(s2, q) = the midpoint R = what holds **after s1 / before s2**
-
-The code passes wp1 (state before s1) where the spec calls for R = wp2 (state after s1).
-
-For hole-free programs this doesn't matter (no obligations to pollute). For consecutive holes it also doesn't matter (wp1 = wp(□, wp2) = wp2). But when concrete code appears as s1 in any sub-sequence, the WP transformation distorts the precondition.
-
-In our example, inside c₂ = Sequence(x := 1, □1):
-- wp2_inner = wp(□1, Q) = (x = 1) — the correct midpoint
-- wp1_inner = wp(x := 1, (x = 1)) = (1 = 1) — the pre *before* the assignment
-- The code passes wp1_inner = (1 = 1) as □1's pre, but the spec says it should be wp2_inner = (x = 1)
-
----
-
-### 5. Soundness is Preserved
-
-Despite the imprecise preconditions, the system remains **sound**. The obligation `{(1 = 1)} □1 {(x = 1)}` is *strictly harder* than the correct `{(x = 1)} □1 {(x = 1)}` — the precondition (1 = 1) is logically weaker (it's just `true`), giving the hole-filler less information to work with.
-
-Any filling that satisfies the stricter obligation also satisfies the correct one. So the soundness theorem still holds: every accepted completion is globally correct.
-
-What's lost is **precision**: some valid completions are rejected. In our example, `□0 → skip, □1 → skip` is a correct completion (the filled program `skip; x := 1; skip` satisfies `{true} _ {x = 1}`), but the obligation for □1 is unsatisfiable — demanding x = 1 from no information about x.
-
-The **completion check** (which re-runs WP on the fully filled program) correctly verifies this filling. So the gap is between the obligations (too strict) and the completion check (exact).
-
----
-
-### 6. The Fix
-
-The fix (now applied) passes **wp2** (the midpoint) instead of **wp1** as the forward precondition for s2:
-
-```scala
-case Sequence(s1, s2) =>
-  val (wp2, vcs2, obs2) = wpVc(s2, p, q)
-  val (wp1, vcs1, obs1) = wpVc(s1, p, wp2)
-  val (_, vcs2r, obs2r) = wpVc(s2, wp2, q)  // ← wp2 not wp1
-  (wp1, vcs1 ++ vcs2r, obs1 ++ obs2r)
-```
-
-This gives each hole the midpoint R = wp(c₂, Q) as its forward context, matching the spec's Sequence rule exactly.
-
----
-
-### 7. Deeper Limitation: Consecutive Holes Can't Cooperate
-
-Even with the fix above, **consecutive holes remain asymmetric**. For `□0 ; □1` with post Q:
+Consecutive holes are inherently asymmetric. For `□0 ; □1` with post Q:
 
 - R = wp(□1, Q) = Q
 - □0: {P} □0 {Q} — must establish Q
 - □1: {Q} □1 {Q} — must preserve Q
 
-The midpoint is always Q because wp(□, Q) = Q. There's no mechanism to split the work between the two holes. This is a fundamental limitation of using WP as the sole propagation direction.
+The midpoint is always Q because wp(□, Q) = Q. There is no mechanism to split work between the holes — the first hole bears the full burden.
 
-Possible extensions to address this:
-- **Midpoint annotations** (like loop invariants): let the programmer supply R between holes
+When concrete code separates the holes, its WP transformation can reduce the burden. In the example above, `x := 1` between the holes makes both obligations trivial. The concrete code contributes to the postcondition, relieving the holes.
+
+---
+
+### 6. Possible Extensions
+
+The asymmetry could be addressed by:
+
+- **Midpoint annotations** (like loop invariants): let the programmer supply R between consecutive holes
 - **Strongest-postcondition tracking**: propagate SP forward alongside WP backward, giving holes tighter preconditions
 - **Synthesis-guided splitting**: use a solver to find a midpoint R such that both obligations become satisfiable
 
 ---
 
-### 8. Summary Table
+### 7. Summary
 
 | Program | □0 obligation | □1 obligation | Notes |
 |---|---|---|---|
 | `□0 ; □1` | {true} □0 {x=1} | {x=1} □1 {x=1} | □0 does all work |
-| `□0 ; x:=1 ; □1` (fixed) | {true} □0 {true} | {x=1} □1 {x=1} | Both trivial; matches spec |
-| `□0 ; x:=1 ; □1` (before fix) | {true} □0 {(1=1)} | {(1=1)} □1 {x=1} | □1 was too strict |
+| `□0 ; x:=1 ; □1` | {true} □0 {true} | {x=1} □1 {x=1} | Both trivial; concrete code helps |
